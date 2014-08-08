@@ -5,7 +5,7 @@ Boco AMQP wrapper.
     BocoAMQP = require 'boco-amqp'
     Async = require 'async'
     assert = require 'assert'
-    tests = [] 
+    tests = []
 
 # Schemas
 
@@ -104,3 +104,5 @@ _Execute all the asynchronous tests in this README_
       connection.close (error) ->
         throw error if error?
         process.exit()
+
+[AMQP URI]: https://www.rabbitmq.com/uri-spec.html
