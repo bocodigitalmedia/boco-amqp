@@ -8,10 +8,12 @@ class Exchange
     @options = new ExchangeOptions options
 
 class ExchangeOptions
+  
   constructor: (properties = {}) ->
     @durable = properties.durable
     @internal = properties.internal
     @autoDelete = properties.autoDelete
+    @alternateExchange = properties.alternateExchange
     @setDefaults()
 
   setDefaults: ->

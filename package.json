@@ -22,5 +22,10 @@
   },
   "devDependencies": {
     "coffee-script": "~1.6.3"
+  },
+  "dependencies": {
+    "when": "~3.4.3",
+    "amqplib": "~0.2.0",
+    "async": "~0.9.0"
   }
 }
