@@ -22,4 +22,8 @@ class Connection
       connection: this
       promiseForChannel: promiseForChannel
 
+  close: (callback) ->
+    @promiseForConnection.then (connection) ->
+      connection.close callback
+
 module.exports = Connection

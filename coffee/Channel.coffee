@@ -20,12 +20,13 @@ class Channel
       assertQueues = (done) ->
         Async.eachSeries schema.queues, assertQueue, done
 
-      Async.series [assertExchanges, assertQueues], (error) -> callback error
+      Async.series [assertExchanges, assertQueues], (error) ->
+        callback error
 
-    When(@promiseForChannel)
+    @promiseForChannel
       .then(assertExchangesAndQueues)
-      .catch (error) -> callback error
       .done()
+
 
     return undefined
 

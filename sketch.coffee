@@ -1,6 +1,6 @@
-BocoRabbit = require 'boco-rabbit'
+BocoAMQP = require 'boco-amqp'
 
-schema = new BocoRabbit.Schema()
+schema = new BocoAMQP.Schema()
 
 schema.defineExchange "x-dead-letter", "fanout"
 
@@ -18,7 +18,8 @@ schema.defineQueue "q-defaults"
 
 console.log JSON.stringify(schema, null, 2)
 
-connection = BocoRabbit.connect "amqp://localhost"
+connection = BocoAMQP.connect "amqp://localhost"
+
 channel = connection.createChannel()
 
 channel.assertSchema schema, (error) ->
