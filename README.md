@@ -7,6 +7,26 @@ Boco AMQP wrapper.
     assert = require 'assert'
     tests = []
 
+# Connection
+
+Pass in an [AMQP URI] to the `connect` method to get a new connection:
+
+    connection = BocoAMQP.connect "amqp://localhost"
+
+# Channels
+
+Create a channel using your connection as follows:
+
+    channel = connection.createChannel()
+
+## Confirmation Channel
+
+A confirmation channel will ack/nack the `publish` and `sendToQueue` methods using the [confirmation mode] extension.
+
+This channel type is best suited for producing important messages.
+
+    confirmChannel = connection.createChannel confirmationMode: true
+    
 # Schemas
 
 Schemas model the definitions for exchanges and queues.
@@ -36,7 +56,7 @@ If you do not pass in the options for the exchange, defaults will be set automat
 
 Pass in an object as the last parameter to set options for the exchange:
 
-    exchange = schema.defineExchange "x-events", "direct",
+    exchange = schema.defineExchange "x-user-messages", "direct",
       durable: true
       alternateExchange: "x-dead-letter"
 
@@ -77,27 +97,26 @@ Pass in an object as the last parameter to set options for the queue:
     args = options.arguments
     assert.equal "x-dead-letter", args["x-dead-letter-exchange"]
 
-# Usage
+## Binding queues to exchanges
 
-Pass in an [AMQP URI] to the `connect` method to get a new connection:
+    binding = schema.defineQueueBinding "q-users-john", "x-user-messages", "users.john"
 
-    connection = BocoAMQP.connect "amqp://localhost"
-
-## Create a Channel
-
-    channel = connection.createChannel()
+    assert.equal "q-users-john", binding.queueName
+    assert.equal "x-user-messages", binding.exchangeName
+    assert.equal "users.john", binding.pattern
 
 ## Assert a Schema
 
-Assert the exchanges and queues defined in the schema by calling the `assertSchema` method of the channel:
+Assert the exchanges and queues defined in the schema by calling the `assertSchema` method on a channel, passing in your schema:
 
     tests.push (done) ->
       channel.assertSchema schema, done
 
 
+<br><br><br><br>
 ---
 
-_Execute all the asynchronous tests in this README_
+_The following code executes the asynchronous tests in this README_
 
     Async.series tests, (error) ->
       throw error if error?
@@ -106,3 +125,4 @@ _Execute all the asynchronous tests in this README_
         process.exit()
 
 [AMQP URI]: https://www.rabbitmq.com/uri-spec.html
+[confirmation mode]: https://www.rabbitmq.com/confirms.html

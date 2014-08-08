@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "QueueBinding.js",
+  "sourceRoot": "..",
+  "sources": [
+    "coffee/QueueBinding.coffee"
+  ],
+  "names": [],
+  "mappings": ";AAAA;CAAA,KAAA,MAAA;;CAAA,CAAM;CACS,EAAA,CAAA,MAAA,YAAC;;GAAa,KAAb;QACZ;CAAA,EAAa,CAAZ,EAAD,GAAA,CAAuB;CAAvB,EACgB,CAAf,EAAD,IAA0B,EAA1B;CADA,EAEW,CAAV,EAAD,CAAA,GAAqB;CAFrB,EAGa,CAAZ,EAAD,IAAuB,CAAtB;CAJH,IAAa;;CAAb;;CADF;;CAAA,CAOA,CAAiB,GAAX,CAAN,KAPA;CAAA"
+}

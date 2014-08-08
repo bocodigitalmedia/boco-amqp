@@ -11,7 +11,8 @@ class Connection
 
     getPromiseForChannel = (connection) ->
       deferred = When.defer()
-      connection.createChannel (error, channel) ->
+      type =  if options.confirmationMode then "ConfirmChannel" else "Channel"
+      connection["create#{type}"] (error, channel) ->
         return deferred.reject error if error?
         return deferred.resolve channel
       return deferred.promise

@@ -19,9 +19,17 @@ class Channel
         channel.assertQueue queue.name, queue.options, done
       assertQueues = (done) ->
         Async.eachSeries schema.queues, assertQueue, done
+      bindQueue = (binding, done) ->
+        queue = binding.queueName
+        exch = binding.exchangeName
+        pattern = binding.pattern
+        args = binding.arguments
+        channel.bindQueue queue, exch, pattern, args, done
+      bindQueues = (done) ->
+        Async.eachSeries schema.queueBindings, bindQueue, done
 
-      Async.series [assertExchanges, assertQueues], (error) ->
-        callback error
+      steps = [assertExchanges, assertQueues, bindQueues]
+      Async.series steps, (error) -> callback error
 
     @promiseForChannel
       .then(assertExchangesAndQueues)
