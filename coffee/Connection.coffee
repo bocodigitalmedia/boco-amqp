@@ -20,7 +20,6 @@ class Connection
     promiseForChannel = When(@promiseForConnection).then getPromiseForChannel
 
     new Channel
-      connection: this
       promiseForChannel: promiseForChannel
 
   close: (callback) ->

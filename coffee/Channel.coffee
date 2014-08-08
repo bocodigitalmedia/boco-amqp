@@ -4,7 +4,6 @@ When = require 'when'
 class Channel
 
   constructor: (properties = {}) ->
-    @connection = properties.connection
     @promiseForChannel = properties.promiseForChannel
 
   assertSchema: (schema, callback) ->
@@ -20,11 +19,8 @@ class Channel
       assertQueues = (done) ->
         Async.eachSeries schema.queues, assertQueue, done
       bindQueue = (binding, done) ->
-        queue = binding.queueName
-        exch = binding.exchangeName
-        pattern = binding.pattern
-        args = binding.arguments
-        channel.bindQueue queue, exch, pattern, args, done
+        channel.bindQueue binding.queueName, binding.exchangeName,
+          binding.pattern, binding.arguments, done
       bindQueues = (done) ->
         Async.eachSeries schema.queueBindings, bindQueue, done
 
@@ -34,8 +30,6 @@ class Channel
     @promiseForChannel
       .then(assertExchangesAndQueues)
       .done()
-
-
     return undefined
 
 module.exports = Channel
