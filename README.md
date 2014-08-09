@@ -7,23 +7,24 @@ Boco AMQP wrapper.
     assert = require 'assert'
     tests = []
 
+# Configuration
+
+    config = {}
+    amqp = BocoAMQP.createService config
+
 # Usage
 
 ## Connecting to the broker
 
 Pass in an [AMQP URI] to the `connect` method to get a new connection. You will likely use one connection per app, and multiple channels (see below).
 
-    connection = BocoAMQP.connect "amqp://localhost"
+    connection = amqp.connect "amqp://localhost"
 
 ## Creating channels
 
 Channels are used for communication to the broker via the connection. All of the AMQP methods are performed over channels. For more information on channels, check out the [AMQP Concepts] page on RabbitMQ's site.
 
     channel = connection.createChannel()
-
-Create a channel in [confirmation mode] by passing in the `confirmationMode` flag in the options hash:
-
-    confirmChannel = connection.createChannel confirmationMode: true
 
 ## Defining a schema
 

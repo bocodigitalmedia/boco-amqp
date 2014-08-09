@@ -7,23 +7,23 @@ class Connection
     @uri = properties.uri
     @promiseForConnection = properties.promiseForConnection
 
-  createChannel: (options = {}) ->
+  createChannel: ->
 
     getPromiseForChannel = (connection) ->
       deferred = When.defer()
-      type =  if options.confirmationMode then "ConfirmChannel" else "Channel"
-      connection["create#{type}"] (error, channel) ->
+      connection.createChannel (error, channel) ->
         return deferred.reject error if error?
         return deferred.resolve channel
       return deferred.promise
 
     promiseForChannel = When(@promiseForConnection).then getPromiseForChannel
-
-    new Channel
-      promiseForChannel: promiseForChannel
+    new Channel promiseForChannel: promiseForChannel
 
   close: (callback) ->
-    @promiseForConnection.then (connection) ->
-      connection.close callback
+    closeConnection = (connection) -> connection.close callback
+    @promiseForConnection
+      .then(closeConnection)
+      .catch(callback)
+
 
 module.exports = Connection
