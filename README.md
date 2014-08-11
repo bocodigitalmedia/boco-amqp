@@ -18,6 +18,7 @@ Let's define some global variables that will be assigned asynchronously...
 
     $connection = null
     $channel1 = null
+    $publisher = null
 
 ## Connecting to the broker
 
@@ -35,7 +36,7 @@ Channels are used for communication to the broker via the connection. All of the
 
     tests.push (done) -> # execute async
       properties = {}
-      $connection.createChannel properties, (error, channel) ->
+      $connection.createChannel (error, channel) ->
         return done error if error?
         $channel1 = channel
         done()
@@ -83,6 +84,15 @@ Assert the `exchanges` and `queues` defined in the schema by calling the `assert
     tests.push (done) -> # execute async
       $channel1.assertSchema schema, done
 
+## Creating a publisher
+
+Publishers are used to publish messages.
+
+    tests.push (done) -> # execute async
+      $connection.createPublisher (error, publisher) ->
+        return done error if error?
+        $publisher = publisher
+        done()
 
 ## Creating messages
 
@@ -95,15 +105,12 @@ Assert the `exchanges` and `queues` defined in the schema by calling the `assert
 
     message.carbonCopy "users.jane"
     message.blindCarbonCopy "users.secret"
-    
+
+
 ## Publishing messages
 
     tests.push (done) ->
-      $channel1.publish "x-user-messages", message, (error) ->
-        return done error if error?
-        console.log "published message."
-        done()
-
+      $publisher.publish "x-user-messages", message, done
 
 
 <br><br><br><br>
