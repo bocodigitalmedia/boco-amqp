@@ -5,5 +5,6 @@ exports.Schema = require './Schema'
 exports.Channel = require './Channel'
 exports.Connection = require './Connection'
 exports.Service = require './Service'
+exports.Message = require './Message'
 
 exports.createService = (properties) -> new exports.Service properties

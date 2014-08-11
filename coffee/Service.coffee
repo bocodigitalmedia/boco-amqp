@@ -1,16 +1,19 @@
 When = require 'when'
 AMQPLib = require 'amqplib/callback_api'
 Connection = require './Connection'
+Schema = require './Schema'
 
 class AMQPService
 
-  connect: (uri) ->
-    deferred = When.defer()
-    AMQPLib.connect uri, (error, connection) ->
-      return deferred.reject error if error?
-      return deferred.resolve connection
-    new Connection
-      uri: uri
-      promiseForConnection: deferred.promise
+  connect: (properties = {}, callback) ->
+
+    AMQPLib.connect properties.uri, (error, wrapped) ->
+      return callback error if error?
+      connection = new Connection properties
+      connection.wrapped = wrapped
+      callback null, connection
+
+  createSchema: (properties) ->
+    new Schema properties
 
 module.exports = AMQPService

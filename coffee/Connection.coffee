@@ -1,29 +1,20 @@
-When = require 'when'
 Channel = require './Channel'
 
 class Connection
 
   constructor: (properties = {}) ->
     @uri = properties.uri
-    @promiseForConnection = properties.promiseForConnection
+    @wrapped = properties.wrapped
 
-  createChannel: ->
-
-    getPromiseForChannel = (connection) ->
-      deferred = When.defer()
-      connection.createChannel (error, channel) ->
-        return deferred.reject error if error?
-        return deferred.resolve channel
-      return deferred.promise
-
-    promiseForChannel = When(@promiseForConnection).then getPromiseForChannel
-    new Channel promiseForChannel: promiseForChannel
+  createChannel: (properties, callback) ->
+    @wrapped.createChannel (error, wrapped) ->
+      return callback error if error?
+      channel = new Channel properties
+      channel.wrapped = wrapped
+      callback null, channel
 
   close: (callback) ->
-    closeConnection = (connection) -> connection.close callback
-    @promiseForConnection
-      .then(closeConnection)
-      .catch(callback)
+    @wrapped.close (error) -> callback error
 
 
 module.exports = Connection
