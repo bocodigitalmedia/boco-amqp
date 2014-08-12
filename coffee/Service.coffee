@@ -2,6 +2,7 @@ When = require 'when'
 AMQPLib = require 'amqplib/callback_api'
 Connection = require './Connection'
 Schema = require './Schema'
+Message = require './Message'
 
 class AMQPService
 
@@ -15,5 +16,8 @@ class AMQPService
 
   createSchema: (properties) ->
     new Schema properties
+
+  createMessage: (properties) ->
+    new Message properties
 
 module.exports = AMQPService

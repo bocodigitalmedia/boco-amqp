@@ -6,24 +6,28 @@ class Channel
     @wrapped = properties.wrapped
 
   assertExchange: (exchange, callback) ->
-    x = exchange
-    done = (error) -> callback error, exchange
-    @wrapped.assertExchange x.name, x.type, x.options, done
+    @wrapped.assertExchange exchange.name, exchange.type, exchange.options,
+      (error) -> callback error
 
   assertQueue: (queue, callback) ->
-    q = queue
-    done = (error) -> callback error, queue
-    @wrapped.assertQueue q.name, q.options, done
+    @wrapped.assertQueue queue.name, queue.options,
+      (error) -> callback error
 
   bindQueue: (binding, callback) ->
-    b = binding
-    done = (error) -> callback error, binding
-    @wrapped.bindQueue b.queueName, b.exchangeName, b.pattern, b.arguments, done
+    @wrapped.bindQueue binding.queueName, binding.exchangeName,
+      binding.pattern, binding.arguments,
+      (error) -> callback error
 
   assertSchema: (schema, callback) ->
-    assertExchange = @assertExchange.bind this
-    assertQueue = @assertQueue.bind this
-    bindQueue = @bindQueue.bind this
+    channel = this
+
+    # create methods pre-bound to this channel
+    assertExchange = (exchange, done) ->
+      channel.assertExchange exchange, done
+    assertQueue = (queue, done) ->
+      channel.assertQueue queue, done
+    bindQueue = (binding, done) ->
+      channel.bindQueue binding, done
 
     assertExchanges = (done) ->
       Async.eachSeries schema.exchanges, assertExchange, done
@@ -34,5 +38,9 @@ class Channel
 
     steps = [assertExchanges, assertQueues, bindQueues]
     Async.series steps, callback
+
+  close: (callback) ->
+    @wrapped.close (error) -> callback error
+
 
 module.exports = Channel

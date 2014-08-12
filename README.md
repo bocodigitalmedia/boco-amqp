@@ -6,6 +6,7 @@ Boco AMQP wrapper.
     Async = require 'async'
     assert = require 'assert'
     tests = []
+    test = (name, fn) -> tests.push name: name, fn: fn
 
 # Configuration
 
@@ -17,29 +18,27 @@ Boco AMQP wrapper.
 Let's define some global variables that will be assigned asynchronously...
 
     $connection = null
-    $channel1 = null
+    $channel = null
     $publisher = null
 
 ## Connecting to the broker
 
 Pass in an [AMQP URI] to the `connect` method to get a new connection. You will likely use one connection per app, and multiple channels (see below).
 
-    tests.push (done) -> # execute async
+    test "connecting to a broker", (done) ->
       amqp.connect uri: "amqp://localhost", (error, connection) ->
-        return done error if error?
         $connection = connection
-        done()
+        done error
 
 ## Creating channels
 
+
 Channels are used for communication to the broker via the connection. All of the AMQP methods are performed over channels. For more information on channels, check out the [AMQP Concepts] page on RabbitMQ's site.
 
-    tests.push (done) -> # execute async
-      properties = {}
+    test "creating a channel", (done) ->
       $connection.createChannel (error, channel) ->
-        return done error if error?
-        $channel1 = channel
-        done()
+        $channel = channel
+        done error
 
 
 ## Defining a schema
@@ -81,48 +80,48 @@ Define bindings by passing in the `queueName`, `exchangeName`, a routing `patter
 
 Assert the `exchanges` and `queues` defined in the schema by calling the `assertSchema` method on a channel, passing in your `schema` as the first parameter. This method is performed asynchronously, and utilizes a `callback` as the last parameter.
 
-    tests.push (done) -> # execute async
-      $channel1.assertSchema schema, done
+    test "asserting a schema", (done) ->
+      $channel.assertSchema schema, done
 
 ## Creating a publisher
 
-Publishers are used to publish messages.
+Publishers are used to publish messages. They use a channel that is configured to use the [confirmation mode] extension. This allows each `publish` to receive a callback when the message has been delivered.
 
-    tests.push (done) -> # execute async
+    test "creating a publisher", (done) ->
       $connection.createPublisher (error, publisher) ->
-        return done error if error?
         $publisher = publisher
-        done()
+        done error
 
-## Creating messages
+## Creating Messages
 
-    message = new BocoAMQP.Message
+    message = amqp.createMessage
       routingKey: "users.john"
       contentType: "text/plain"
       contentEncoding: "utf-8"
-
-    message.payload = new Buffer "Hello, John."
-
-    message.carbonCopy "users.jane"
-    message.blindCarbonCopy "users.secret"
-
+      payload: new Buffer "Hello, John."
 
 ## Publishing messages
 
-    tests.push (done) ->
+    test "publishing a message", (done) ->
       $publisher.publish "x-user-messages", message, done
-
 
 <br><br><br><br>
 ---
 
 _The following code executes the asynchronous tests in this README_
 
-    Async.series tests, (error) ->
-      throw error if error?
+    runTest = (test, done) ->
+      console.log "* #{test.name}"
+      test.fn done
+
+    cleanUp = (error) ->
+      console.error error if error?
+      return unless $connection?
       $connection.close (error) ->
         throw error if error?
-        process.exit()
+
+    Async.eachSeries tests, runTest, cleanUp
+
 
 [AMQP URI]: https://www.rabbitmq.com/uri-spec.html
 [confirmation mode]: https://www.rabbitmq.com/confirms.html
