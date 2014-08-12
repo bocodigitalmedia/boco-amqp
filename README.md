@@ -22,6 +22,7 @@ Let's define some global variables that will be assigned asynchronously...
     $connection = null
     $channel = null
     $confirmChannel = null
+    $consumer = null
 
 ## Connecting to the broker
 
@@ -68,7 +69,6 @@ Define a queue by passing in the `name` and an optional `options` hash.
 
     schema.defineQueue "q-users-john",
       durable: true
-      autoDelete: true
       arguments:
         "x-dead-letter-exchange": "x-dead-letter"
 
@@ -99,9 +99,11 @@ A special type of channel that is configured to use the [confirmation mode] exte
 Create a message by passing in the message `properties` to the `createMessage` method.
 
     message = amqp.createMessage
+      messageId: require("uuid").v4()
       routingKey: "users.john"
       contentType: "text/plain"
       contentEncoding: "utf-8"
+      persistent: true
       payload: new Buffer "Hello, John."
 
 ## Publishing messages
@@ -111,6 +113,26 @@ It is suggested to publish messages using a `confirmChannel` so that you may rec
     test "publishing a message", (done) ->
       $confirmChannel.publish "x-user-messages", message, done
 
+
+## Consuming messages
+
+    test "consuming messages", (done) ->
+
+      handleMessage = (message) ->
+        $channel.ack message
+
+      parameters =
+        prefetch: 1
+        queueName: "q-users-john"
+        handleMessage: handleMessage
+
+      $channel.consume parameters, (error, consumer) ->
+        return done error if error?
+        $consumer = consumer
+        setTimeout done, 100
+
+    test "cancelling a consumer", (done) ->
+      $consumer.cancel done
 
 <br><br><br><br>
 ---

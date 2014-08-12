@@ -6,7 +6,7 @@ class Message
     @expiration = properties.expiration
     @userId = properties.userId
     @mandatory = properties.mandatory
-    @persistent = properties.persistent
+    @deliveryMode = properties.deliveryMode
     @immediate = properties.immediate
     @contentType = properties.contentType
     @contentEncoding = properties.contentEncoding
@@ -18,12 +18,17 @@ class Message
     @appId = properties.appId
     @payload = properties.payload
 
+    @deliveryTag = properties.deliveryTag
+    @consumerTag = properties.consumerTag
+    @exchangeName = properties.exchangeName
+    @redelivered = properties.redelivered
+
     @setHeaders properties.headers
     @setDefaults()
 
   setDefaults: ->
     @mandatory ?= false
-    @persistent ?= false
+    @deliveryMode ?= 1
     @immediate ?= false
 
   setHeaders: (headers = {}) ->

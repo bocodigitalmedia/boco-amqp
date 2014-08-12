@@ -1,4 +1,19 @@
 Async = require 'async'
+Consumer = require './Consumer'
+Message = require './Message'
+
+createNativeMessage = (amqpLibMessage) ->
+  properties = amqpLibMessage.properties
+  fields = amqpLibMessage.fields
+  message = new Message properties
+
+  message.deliveryTag ?= fields.deliveryTag
+  message.consumerTag ?= fields.consumerTag
+  message.exchangeName ?= fields.exchange
+  message.routingKey ?= fields.routingKey
+  message.redelivered ?= fields.redelivered
+
+  return message
 
 getOptionsForPublish = (message) ->
   options =
@@ -6,7 +21,7 @@ getOptionsForPublish = (message) ->
     expiration: message.expiration
     userId: message.userId
     mandatory: message.mandatory
-    persistent: message.persistent
+    deliveryMode: message.deliveryMode
     immediate: message.immediate
     contentType: message.contentType
     contentEncoding: message.contentEncoding
@@ -17,6 +32,16 @@ getOptionsForPublish = (message) ->
     type: message.type
     headers: message.headers
 
+  delete options[key] for own key,value of options when value is undefined
+  return options
+
+getOptionsForConsume = (consumer) ->
+  options =
+    noAck: consumer.noAck
+    exclusive: consumer.exclusive
+    priority: consumer.priority
+    arguments: consumer.arguments
+    consumerTag: consumer.consumerTag
   delete options[key] for own key,value of options when value is undefined
   return options
 
@@ -62,6 +87,45 @@ class Channel
   publish: (exchangeName, message) ->
     options = getOptionsForPublish message
     @wrapped.publish exchangeName, message.routingKey, content, options
+
+  ack: (message) ->
+    fauxMessage = fields: { deliveryTag: message.deliveryTag }
+    @wrapped.ack fauxMessage
+
+  nack: (message, options = {}) ->
+    options.requeue ?= true
+    fauxMessage = fields: { deliveryTag: message.deliveryTag }
+    @wrapped.nack fauxMessage, false, options.requeue
+
+  consume: (properties = {}, callback) ->
+
+    channel = this
+
+    consumer = new Consumer
+      channel: channel
+      prefetch: properties.prefetch
+      consumerTag: properties.consumerTag
+      queueName: properties.queueName
+      handleMessage: properties.handleMessage
+
+    prefetch = consumer.prefetch
+    queue = consumer.queueName
+    options = getOptionsForConsume consumer
+
+    proxyMessage = (m) ->
+      message = createNativeMessage m
+      message.ack = -> channel.ack message
+      message.nack = (requeue) -> channel.nack message, requeue
+      consumer.handleMessage message
+
+    @wrapped.prefetch prefetch
+    @wrapped.consume queue, proxyMessage, options, (error, reply = {}) ->
+      return callback error if error?
+      consumer.consumerTag ?= reply.consumerTag
+      callback null, consumer
+
+  cancel: (consumerTag, callback) ->
+    @wrapped.cancel consumerTag, (error) -> callback error
 
   close: (callback) ->
     @wrapped.close (error) -> callback error

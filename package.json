@@ -21,7 +21,8 @@
     "url": "https://github.com/bocodigitalmedia/boco-rabbit/issues"
   },
   "devDependencies": {
-    "coffee-script": "~1.6.3"
+    "coffee-script": "~1.6.3",
+    "uuid": "~1.4.1"
   },
   "dependencies": {
     "when": "~3.4.3",
