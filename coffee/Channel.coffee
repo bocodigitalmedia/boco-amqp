@@ -98,19 +98,10 @@ class Channel
     @wrapped.nack fauxMessage, false, options.requeue
 
   consume: (properties = {}, callback) ->
-
     channel = this
 
-    consumer = new Consumer
-      channel: channel
-      prefetch: properties.prefetch
-      consumerTag: properties.consumerTag
-      queueName: properties.queueName
-      handleMessage: properties.handleMessage
-
-    prefetch = consumer.prefetch
-    queue = consumer.queueName
-    options = getOptionsForConsume consumer
+    consumer = new Consumer properties
+    consumer.channel = this
 
     proxyMessage = (m) ->
       message = createNativeMessage m
@@ -118,7 +109,11 @@ class Channel
       message.nack = (requeue) -> channel.nack message, requeue
       consumer.handleMessage message
 
-    @wrapped.prefetch prefetch
+    prefetch = consumer.prefetch
+    queue = consumer.queueName
+    options = getOptionsForConsume consumer
+
+    @wrapped.prefetch consumer.prefetch
     @wrapped.consume queue, proxyMessage, options, (error, reply = {}) ->
       return callback error if error?
       consumer.consumerTag ?= reply.consumerTag

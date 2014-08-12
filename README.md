@@ -118,18 +118,29 @@ It is suggested to publish messages using a `confirmChannel` so that you may rec
 
     test "consuming messages", (done) ->
 
+Define a handler for the message. The handler should `ack` or `nack` the message when finished. You may reject the message by passing `requeue: false` to `nack`.
+
       handleMessage = (message) ->
+        # do something with this message...
         $channel.ack message
 
-      parameters =
+Create the properties for your consumer.
+
+      properties =
         prefetch: 1
         queueName: "q-users-john"
         handleMessage: handleMessage
 
-      $channel.consume parameters, (error, consumer) ->
+Call the `consume` method on the channel you wish to use, passing in the `properties` for the consumer. The channel will configure a new `Consumer` using the `properties` you provided and return it asynchronously.
+
+      $channel.consume properties, (error, consumer) ->
         return done error if error?
         $consumer = consumer
         setTimeout done, 100
+
+## Cancelling a consumer
+
+Cancelling a consumer will prevent it from processing further messages.
 
     test "cancelling a consumer", (done) ->
       $consumer.cancel done
