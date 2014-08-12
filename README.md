@@ -4,7 +4,9 @@ Boco AMQP wrapper.
 
     BocoAMQP = require 'boco-amqp'
     Async = require 'async'
-    assert = require 'assert'
+
+The following code allows us to build up a "suite" of tests to run asynchronously at the end of this README.
+
     tests = []
     test = (name, fn) -> tests.push name: name, fn: fn
 
@@ -19,7 +21,7 @@ Let's define some global variables that will be assigned asynchronously...
 
     $connection = null
     $channel = null
-    $publisher = null
+    $confirmChannel = null
 
 ## Connecting to the broker
 
@@ -83,16 +85,18 @@ Assert the `exchanges` and `queues` defined in the schema by calling the `assert
     test "asserting a schema", (done) ->
       $channel.assertSchema schema, done
 
-## Creating a publisher
+## Creating a confirmation channel.
 
-Publishers are used to publish messages. They use a channel that is configured to use the [confirmation mode] extension. This allows each `publish` to receive a callback when the message has been delivered.
+A special type of channel that is configured to use the [confirmation mode] extension. This allows each `publish` to receive a callback when the message has been delivered.
 
-    test "creating a publisher", (done) ->
-      $connection.createPublisher (error, publisher) ->
-        $publisher = publisher
+    test "creating a channel in confirmation mode", (done) ->
+      $connection.createConfirmChannel (error, confirmChannel) ->
+        $confirmChannel = confirmChannel
         done error
 
 ## Creating Messages
+
+Create a message by passing in the message `properties` to the `createMessage` method.
 
     message = amqp.createMessage
       routingKey: "users.john"
@@ -102,25 +106,31 @@ Publishers are used to publish messages. They use a channel that is configured t
 
 ## Publishing messages
 
+It is suggested to publish messages using a `confirmChannel` so that you may receive notification of the message being sent.
+
     test "publishing a message", (done) ->
-      $publisher.publish "x-user-messages", message, done
+      $confirmChannel.publish "x-user-messages", message, done
+
 
 <br><br><br><br>
 ---
 
 _The following code executes the asynchronous tests in this README_
 
+    # Run a single test
     runTest = (test, done) ->
       console.log "* #{test.name}"
       test.fn done
 
+    # Clean up when tests fail or are finished
     cleanUp = (error) ->
       console.error error if error?
       return unless $connection?
       $connection.close (error) ->
         throw error if error?
 
-    Async.eachSeries tests, runTest, cleanUp
+    # Run all the tests now
+    Async.eachSeries tests, runTest, cleanUp unless module.parent?
 
 
 [AMQP URI]: https://www.rabbitmq.com/uri-spec.html

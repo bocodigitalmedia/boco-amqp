@@ -1,5 +1,4 @@
 Channel = require './Channel'
-Publisher = require './Publisher'
 
 class Connection
 
@@ -13,11 +12,11 @@ class Connection
       channel = new Channel wrapped: wrapped
       callback null, channel
 
-  createPublisher: (callback) ->
+  createConfirmChannel: (callback) ->
     @wrapped.createConfirmChannel (error, wrapped) ->
       return callback error if error?
-      publisher = new Publisher wrapped: wrapped
-      callback null, publisher
+      confirmChannel = new Channel.ConfirmChannel wrapped: wrapped
+      callback null, confirmChannel
 
   close: (callback) ->
     @wrapped.close (error) -> callback error

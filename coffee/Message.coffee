@@ -29,12 +29,4 @@ class Message
   setHeaders: (headers = {}) ->
     @headers = headers
 
-  carbonCopy: (routingKeys...) ->
-    current = if @headers.CC? then @headers.CC else []
-    @headers.CC = current.concat routingKeys
-
-  blindCarbonCopy: (routingKeys...) ->
-    current = if @headers.BCC? then @headers.BCC else []
-    @headers.BCC = current.concat routingKeys
-
 module.exports = Message
