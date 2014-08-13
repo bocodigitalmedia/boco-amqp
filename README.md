@@ -125,16 +125,17 @@ Define a handler for the message. The handler should `ack` or `nack` the message
         console.log incomingMessage
         incomingMessage.ack()
 
-Create the properties for your consumer.
 
-      properties =
-        prefetch: 1
+Call the `consume` method on the channel you wish to use, passing in the `parameters` object, and a `callback`. A `Consumer` will be created and returned asynchronously.
+
+      params =
+        noAck: false # default
+        exclusive: false # default
+        prefetch: 1 # get 1 message at a time until ack'ed
         queueName: "q-users-john"
         handleMessage: handleMessage
 
-Call the `consume` method on the channel you wish to use, passing in the `properties` for the consumer. The channel will configure a new `Consumer` using the `properties` you provided and return it asynchronously.
-
-      $channel.consume properties, (error, consumer) ->
+      $channel.consume params, (error, consumer) ->
         return done error if error?
         $consumer = consumer
         setTimeout done, 100
