@@ -36,13 +36,6 @@ getOptionsForPublish = (message) ->
   delete options[key] for own key,value of options when value is undefined
   return options
 
-getOptionsForConsume = (params) ->
-  noAck: params.noAck
-  exclusive: params.exclusive
-  priority: params.priority
-  arguments: params.arguments
-  consumerTag: params.consumerTag
-
 class ConsumeParameters
 
   constructor: (properties = {}) ->
@@ -105,37 +98,46 @@ class Channel
     @wrapped.publish exchangeName, message.routingKey, content, options
 
   ack: (message) ->
-    fauxMessage = fields: { deliveryTag: message.deliveryTag }
-    @wrapped.ack fauxMessage
+    @wrapped.ack message.wrapped
 
   nack: (message, options = {}) ->
     options.requeue ?= true
-    fauxMessage = fields: { deliveryTag: message.deliveryTag }
-    @wrapped.nack fauxMessage, false, options.requeue
+    @wrapped.nack message.wrapped, false, options.requeue
 
   consume: (params = {}, callback) ->
     channel = this
     params = new ConsumeParameters params
 
+    # Create a consumer for this channel
     consumer = new Consumer
       channel: channel
       queueName: params.queueName
       consumerTag: params.consumerTag
       handleMessage: params.handleMessage
 
+    # Proxies messages to the consumer
     proxyMessage = (m) ->
       message = createIncomingMessage m
       message.channel = channel
       consumer.handleMessage message
 
-    queue = params.queueName
-    options = getOptionsForConsume params
-
-    @wrapped.prefetch params.prefetch
-    @wrapped.consume queue, proxyMessage, options, (error, reply = {}) ->
+    # Handles the result of the consume method
+    handleConsume = (error, reply = {}) ->
       return callback error if error?
       consumer.consumerTag ?= reply.consumerTag
       callback null, consumer
+
+    # Get the options for amqplib's consume from our params object
+    options =
+      noAck: params.noAck
+      exclusive: params.exclusive
+      priority: params.priority
+      arguments: params.arguments
+      consumerTag: params.consumerTag
+
+    # Set the prefetch and then begin consuming from the queue
+    @wrapped.prefetch params.prefetch
+    @wrapped.consume params.queueName, proxyMessage, options, handleConsume
 
   cancel: (consumerTag, callback) ->
     @wrapped.cancel consumerTag, (error) -> callback error

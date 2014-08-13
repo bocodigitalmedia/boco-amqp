@@ -32,6 +32,7 @@ class Message
 class Message.IncomingMessage extends Message
 
   constructor: (properties = {}) ->
+    @wrapped = properties.wrapped
     @channel = properties.channel
     @deliveryTag = properties.deliveryTag
     @consumerTag = properties.consumerTag
