@@ -1,4 +1,4 @@
-class BasicProperties
+class MessageProperties
 
   constructor: (properties = {}) ->
     @appId = properties.appId
@@ -19,7 +19,7 @@ class BasicProperties
   setHeaders: (headers = {}) ->
     @headers = headers
 
-class BasicDeliver
+class MessageDelivery # see: BasicDeliver (RabbitMQ)
   constructor: (properties = {}) ->
     @deliveryTag = properties.deliveryTag
     @consumerTag = properties.consumerTag
@@ -35,10 +35,10 @@ class Message
     @setPayload properties.payload
 
   setDelivery: (properties) ->
-    @delivery = new BasicDeliver properties
+    @delivery = new MessageDelivery properties
 
   setProperties: (properties) ->
-    @properties = new BasicProperties properties
+    @properties = new MessageProperties properties
 
   setPayload: (buffer) ->
     @payload = buffer

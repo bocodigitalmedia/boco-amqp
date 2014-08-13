@@ -8,7 +8,7 @@ class Exchange
     @options = new ExchangeOptions options
 
 class ExchangeOptions
-  
+
   constructor: (properties = {}) ->
     @durable = properties.durable
     @internal = properties.internal
@@ -21,5 +21,4 @@ class ExchangeOptions
     @internal = false unless @internal?
     @autoDelete = false unless @autoDelete?
 
-Exchange.Options = ExchangeOptions
 module.exports = Exchange

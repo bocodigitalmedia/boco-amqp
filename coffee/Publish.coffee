@@ -1,5 +1,6 @@
 Message = require './Message'
 
+# Parameters for the 'Channel#publish' method
 class Publish
 
   constructor: (properties = {}) ->

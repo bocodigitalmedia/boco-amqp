@@ -19,5 +19,4 @@ class QueueOptions
     @durable = false unless @durable?
     @autoDelete = false unless @autoDelete?
 
-Queue.Options = QueueOptions
 module.exports = Queue

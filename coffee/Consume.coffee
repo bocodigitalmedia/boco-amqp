@@ -1,3 +1,4 @@
+# Parameters for the 'Channel#consume' method
 class Consume
 
   constructor: (properties = {}) ->
