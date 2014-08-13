@@ -1,50 +1,46 @@
-class Message
+class BasicProperties
 
   constructor: (properties = {}) ->
-    @messageId = properties.messageId
-    @routingKey = properties.routingKey
-    @expiration = properties.expiration
-    @userId = properties.userId
-    @mandatory = properties.mandatory
-    @deliveryMode = properties.deliveryMode
-    @immediate = properties.immediate
-    @contentType = properties.contentType
+    @appId = properties.appId
     @contentEncoding = properties.contentEncoding
-    @priority = properties.priority
+    @contentType = properties.contentType
     @correlationId = properties.correlationId
+    @deliveryMode = properties.deliveryMode
+    @expiration = properties.expiration
+    @messageId = properties.messageId
+    @priority = properties.priority
     @replyTo = properties.replyTo
     @timestamp = properties.timestamp
     @type = properties.type
-    @appId = properties.appId
-    @payload = properties.payload
+    @userId = properties.userId
 
-    @setHeaders properties.header
-    @setDefaults()
-
-  setDefaults: ->
-    @mandatory ?= false
-    @deliveryMode ?= 1
-    @immediate ?= false
+    @setHeaders properties.headers
 
   setHeaders: (headers = {}) ->
     @headers = headers
 
-class Message.IncomingMessage extends Message
-
+class BasicDeliver
   constructor: (properties = {}) ->
-    @wrapped = properties.wrapped
-    @channel = properties.channel
     @deliveryTag = properties.deliveryTag
     @consumerTag = properties.consumerTag
-    @exchangeName = properties.exchangeName
+    @exchange = properties.exchange
+    @routingKey = properties.routingKey
     @redelivered = properties.redelivered
 
-    super properties
+class Message
 
-  ack: ->
-    @channel.ack this
+  constructor: (properties = {}) ->
+    @setProperties properties.properties
+    @setDelivery properties.delivery
+    @setPayload properties.payload
 
-  nack: (options) ->
-    @channel.nack this, options
+  setDelivery: (properties) ->
+    @delivery = new BasicDeliver properties
+
+  setProperties: (properties) ->
+    @properties = new BasicProperties properties
+
+  setPayload: (buffer) ->
+    @payload = buffer
 
 module.exports = Message

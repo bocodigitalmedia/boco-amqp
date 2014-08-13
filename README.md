@@ -99,19 +99,25 @@ A special type of channel that is configured to use the [confirmation mode] exte
 Create a message by passing in the message `properties` to the `createMessage` method.
 
     message = amqp.createMessage
-      messageId: require("uuid").v4()
-      routingKey: "users.john"
-      contentType: "text/plain"
-      contentEncoding: "utf-8"
-      deliveryMode: 2 # persistent
       payload: new Buffer "Hello, John."
+      properties:
+        messageId: require("uuid").v4()
+        contentType: "text/plain"
+        contentEncoding: "utf-8"
+        deliveryMode: 2
 
 ## Publishing messages
 
 It is suggested to publish messages using a `confirmChannel` so that you may receive notification of the message being sent.
 
     test "publishing a message", (done) ->
-      $confirmChannel.publish "x-user-messages", message, done
+
+      params =
+        exchangeName: "x-user-messages"
+        routingKey: "users.john"
+        mandatory: false # mandatory messages will be returned
+        message: message
+      $confirmChannel.publish params, done
 
 
 ## Consuming messages
@@ -120,10 +126,10 @@ It is suggested to publish messages using a `confirmChannel` so that you may rec
 
 Define a handler for the message. The handler should `ack` or `nack` the message when finished. You may reject the message by passing `requeue: false` to `nack`.
 
-      handleMessage = (incomingMessage) ->
+      handleMessage = (message) ->
         # do something with this message...
-        console.log incomingMessage
-        incomingMessage.ack()
+        console.log message
+        $channel.nack message, requeue: false
 
 
 Call the `consume` method on the channel you wish to use, passing in the `parameters` object, and a `callback`. A `Consumer` will be created and returned asynchronously.

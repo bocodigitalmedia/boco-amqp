@@ -2,39 +2,16 @@ Async = require 'async'
 Consumer = require './Consumer'
 Message = require './Message'
 
-createIncomingMessage = (amqpLibMessage) ->
-
-  message = new Message.IncomingMessage amqpLibMessage.properties
-  message.wrapped = amqpLibMessage
-
-  fields = amqpLibMessage.fields
-  message.deliveryTag ?= fields.deliveryTag
-  message.consumerTag ?= fields.consumerTag
-  message.exchangeName ?= fields.exchange
-  message.routingKey ?= fields.routingKey
-  message.redelivered ?= fields.redelivered
-
-  return message
-
-getOptionsForPublish = (message) ->
-  options =
-    messageId: message.messageId
-    expiration: message.expiration
-    userId: message.userId
-    mandatory: message.mandatory
-    deliveryMode: message.deliveryMode
-    immediate: message.immediate
-    contentType: message.contentType
-    contentEncoding: message.contentEncoding
-    priority: message.priority
-    correlationId: message.correlationId
-    replyTo: message.replyTo
-    timestamp: message.timestamp
-    type: message.type
-    headers: message.headers
-
-  delete options[key] for own key,value of options when value is undefined
+getOptionsForPublish = (params) ->
+  options = {}
+  options[key] = val for own key,val of params.message.properties when val?
+  options.mandatory = params.mandatory if params.mandatory?
   return options
+
+createLibMessage = (message) ->
+  fields: message.delivery
+  properties: message.properties
+  content: message.payload
 
 class ConsumeParameters
 
@@ -53,6 +30,22 @@ class ConsumeParameters
     @prefetch ?= 1
     @exclusive ?= false
     @noAck ?= false
+
+class PublishParameters
+
+  constructor: (properties = {}) ->
+    @exchangeName = properties.exchangeName
+    @routingKey = properties.routingKey
+    @mandatory = properties.mandatory
+    @setMessage properties.message
+    @setDefaults()
+
+  setMessage: (message) ->
+    return @message = message if message instanceof Message
+    @message = new Message message
+
+  setDefaults: ->
+    @mandatory ?= false
 
 class Channel
 
@@ -93,16 +86,20 @@ class Channel
     steps = [assertExchanges, assertQueues, bindQueues]
     Async.series steps, callback
 
-  publish: (exchangeName, message) ->
-    options = getOptionsForPublish message
-    @wrapped.publish exchangeName, message.routingKey, content, options
+  publish: (params) ->
+    params = new PublishParameters params
+    options = getOptionsForPublish params
+    @wrapped.publish params.exchangeName, params.routingKey,
+      params.message.payload, options
 
   ack: (message) ->
-    @wrapped.ack message.wrapped
+    amqpLibMessage = createLibMessage message
+    @wrapped.ack amqpLibMessage
 
   nack: (message, options = {}) ->
     options.requeue ?= true
-    @wrapped.nack message.wrapped, false, options.requeue
+    amqpLibMessage = createLibMessage message
+    @wrapped.nack amqpLibMessage, false, options.requeue
 
   consume: (params = {}, callback) ->
     channel = this
@@ -116,9 +113,11 @@ class Channel
       handleMessage: params.handleMessage
 
     # Proxies messages to the consumer
-    proxyMessage = (m) ->
-      message = createIncomingMessage m
-      message.channel = channel
+    proxyMessage = (amqpLibMessage) ->
+      message = new Message
+        payload: amqpLibMessage.content
+        properties: amqpLibMessage.properties
+        delivery: amqpLibMessage.fields
       consumer.handleMessage message
 
     # Handles the result of the consume method
@@ -147,10 +146,10 @@ class Channel
 
 class Channel.ConfirmChannel extends Channel
 
-  publish: (exchangeName, message, callback) ->
-    key = message.routingKey
-    content = message.payload
-    options = getOptionsForPublish message
-    @wrapped.publish exchangeName, key, content, options, callback
+  publish: (params, callback) ->
+    params = new PublishParameters params
+    options = getOptionsForPublish params
+    @wrapped.publish params.exchangeName, params.routingKey,
+      params.message.payload, options, callback
 
 module.exports = Channel
