@@ -9,8 +9,8 @@ class Consumer
 
   setDefaults: ->
     @prefetch ?= 1
-    
-  handleMessage: (message) ->
+
+  handleMessage: (incomingMessage) ->
     throw Error "Not Implemented"
 
   cancel: (callback) ->

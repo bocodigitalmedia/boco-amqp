@@ -18,12 +18,7 @@ class Message
     @appId = properties.appId
     @payload = properties.payload
 
-    @deliveryTag = properties.deliveryTag
-    @consumerTag = properties.consumerTag
-    @exchangeName = properties.exchangeName
-    @redelivered = properties.redelivered
-
-    @setHeaders properties.headers
+    @setHeaders properties.header
     @setDefaults()
 
   setDefaults: ->
@@ -33,5 +28,22 @@ class Message
 
   setHeaders: (headers = {}) ->
     @headers = headers
+
+class Message.IncomingMessage extends Message
+
+  constructor: (properties = {}) ->
+    @channel = properties.channel
+    @deliveryTag = properties.deliveryTag
+    @consumerTag = properties.consumerTag
+    @exchangeName = properties.exchangeName
+    @redelivered = properties.redelivered
+
+    super properties
+
+  ack: ->
+    @channel.ack this
+
+  nack: (options) ->
+    @channel.nack this, options
 
 module.exports = Message

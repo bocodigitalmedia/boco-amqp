@@ -103,7 +103,7 @@ Create a message by passing in the message `properties` to the `createMessage` m
       routingKey: "users.john"
       contentType: "text/plain"
       contentEncoding: "utf-8"
-      persistent: true
+      deliveryMode: 2 # persistent
       payload: new Buffer "Hello, John."
 
 ## Publishing messages
@@ -120,9 +120,10 @@ It is suggested to publish messages using a `confirmChannel` so that you may rec
 
 Define a handler for the message. The handler should `ack` or `nack` the message when finished. You may reject the message by passing `requeue: false` to `nack`.
 
-      handleMessage = (message) ->
+      handleMessage = (incomingMessage) ->
         # do something with this message...
-        $channel.ack message
+        console.log incomingMessage
+        incomingMessage.ack()
 
 Create the properties for your consumer.
 

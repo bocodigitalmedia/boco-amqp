@@ -2,11 +2,11 @@ Async = require 'async'
 Consumer = require './Consumer'
 Message = require './Message'
 
-createNativeMessage = (amqpLibMessage) ->
-  properties = amqpLibMessage.properties
-  fields = amqpLibMessage.fields
-  message = new Message properties
+createIncomingMessage = (amqpLibMessage) ->
 
+  message = new Message.IncomingMessage amqpLibMessage.properties
+
+  fields = amqpLibMessage.fields
   message.deliveryTag ?= fields.deliveryTag
   message.consumerTag ?= fields.consumerTag
   message.exchangeName ?= fields.exchange
@@ -104,9 +104,8 @@ class Channel
     consumer.channel = this
 
     proxyMessage = (m) ->
-      message = createNativeMessage m
-      message.ack = -> channel.ack message
-      message.nack = (requeue) -> channel.nack message, requeue
+      message = createIncomingMessage m
+      message.channel = channel
       consumer.handleMessage message
 
     prefetch = consumer.prefetch
