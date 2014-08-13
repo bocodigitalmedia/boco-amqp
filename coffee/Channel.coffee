@@ -1,51 +1,9 @@
 Async = require 'async'
 Consumer = require './Consumer'
 Message = require './Message'
-
-getOptionsForPublish = (params) ->
-  options = {}
-  options[key] = val for own key,val of params.message.properties when val?
-  options.mandatory = params.mandatory if params.mandatory?
-  return options
-
-createLibMessage = (message) ->
-  fields: message.delivery
-  properties: message.properties
-  content: message.payload
-
-class ConsumeParameters
-
-  constructor: (properties = {}) ->
-    @noAck = properties.noAck
-    @exclusive = properties.exclusive
-    @priority = properties.priority
-    @arguments = properties.arguments
-    @prefetch = properties.prefetch
-    @queueName = properties.queueName
-    @consumerTag = properties.consumerTag
-    @handleMessage = properties.handleMessage
-    @setDefaults()
-
-  setDefaults: ->
-    @prefetch ?= 1
-    @exclusive ?= false
-    @noAck ?= false
-
-class PublishParameters
-
-  constructor: (properties = {}) ->
-    @exchangeName = properties.exchangeName
-    @routingKey = properties.routingKey
-    @mandatory = properties.mandatory
-    @setMessage properties.message
-    @setDefaults()
-
-  setMessage: (message) ->
-    return @message = message if message instanceof Message
-    @message = new Message message
-
-  setDefaults: ->
-    @mandatory ?= false
+AMQPLibUtil = require './AMQPLibUtil'
+Consume = require './Consume'
+Publish = require './Publish'
 
 class Channel
 
@@ -87,27 +45,26 @@ class Channel
     Async.series steps, callback
 
   publish: (params) ->
-    params = new PublishParameters params
-    options = getOptionsForPublish params
+    params = new Publish params
+    options = AMQPLibUtil.getOptionsForPublish params
     @wrapped.publish params.exchangeName, params.routingKey,
       params.message.payload, options
 
   ack: (message) ->
-    amqpLibMessage = createLibMessage message
+    amqpLibMessage = AMQPLibUtil.createLibMessage message
     @wrapped.ack amqpLibMessage
 
   nack: (message, options = {}) ->
     options.requeue ?= true
-    amqpLibMessage = createLibMessage message
+    amqpLibMessage = AMQPLibUtil.createLibMessage message
     @wrapped.nack amqpLibMessage, false, options.requeue
 
   consume: (params = {}, callback) ->
-    channel = this
-    params = new ConsumeParameters params
+    params = new Consume params
 
     # Create a consumer for this channel
     consumer = new Consumer
-      channel: channel
+      channel: this
       queueName: params.queueName
       consumerTag: params.consumerTag
       handleMessage: params.handleMessage
@@ -143,13 +100,5 @@ class Channel
 
   close: (callback) ->
     @wrapped.close (error) -> callback error
-
-class Channel.ConfirmChannel extends Channel
-
-  publish: (params, callback) ->
-    params = new PublishParameters params
-    options = getOptionsForPublish params
-    @wrapped.publish params.exchangeName, params.routingKey,
-      params.message.payload, options, callback
 
 module.exports = Channel

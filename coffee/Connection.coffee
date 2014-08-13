@@ -1,4 +1,5 @@
 Channel = require './Channel'
+ConfirmChannel = require './ConfirmChannel'
 
 class Connection
 
@@ -15,11 +16,10 @@ class Connection
   createConfirmChannel: (callback) ->
     @wrapped.createConfirmChannel (error, wrapped) ->
       return callback error if error?
-      confirmChannel = new Channel.ConfirmChannel wrapped: wrapped
+      confirmChannel = new ConfirmChannel wrapped: wrapped
       callback null, confirmChannel
 
   close: (callback) ->
     @wrapped.close (error) -> callback error
-
 
 module.exports = Connection
