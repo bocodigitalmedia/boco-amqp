@@ -65,7 +65,8 @@ Defining exchanges is easy. Just pass in the `name` and `type` followed by an op
 
 Define a queue by passing in the `name` and an optional `options` hash.
 
-    schema.defineQueue "q-with-defaults"
+    schema.defineQueue "q-dead-letters",
+      durable: true
 
     schema.defineQueue "q-users-john",
       durable: true
@@ -77,6 +78,7 @@ Define a queue by passing in the `name` and an optional `options` hash.
 Define bindings by passing in the `queueName`, `exchangeName`, a routing `pattern`, and an optional `arguments` hash.
 
     schema.defineQueueBinding "q-users-john", "x-user-messages", "users.john"
+    schema.defineQueueBinding "q-dead-letters", "x-dead-letter", "$"
 
 ## Asserting a schema
 
